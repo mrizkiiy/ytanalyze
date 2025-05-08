@@ -1,4 +1,5 @@
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 import * as cheerio from 'cheerio';
 import { supabase } from './supabase';
 
@@ -23,27 +24,18 @@ export async function scrapeYouTubeTrends(
   
   let browser;
   try {
+    // Configure Chromium
+    chromium.setGraphicsMode = false; // Disable WebGL to save resources
+    
+    // Launch browser using Sparticuz/chromium
     browser = await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
       headless: true,
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-infobars',
-        '--window-position=0,0',
-        '--ignore-certifcate-errors',
-        '--ignore-certifcate-errors-spki-list',
-        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
-      ],
-      ignoreDefaultArgs: false,
-      timeout: 180000, // Increase to 3 minutes
-      protocolTimeout: 180000 // Adding protocol timeout of 3 minutes
     });
-    console.log('Puppeteer browser launched successfully');
+    
+    console.log('Puppeteer browser launched successfully with @sparticuz/chromium');
 
     const page = await browser.newPage();
     
@@ -59,8 +51,8 @@ export async function scrapeYouTubeTrends(
     await page.setViewport({ width: 1280, height: 800 });
     
     // Set longer timeouts for all operations
-    await page.setDefaultNavigationTimeout(180000); // 3 minutes
-    await page.setDefaultTimeout(180000); // 3 minutes
+    await page.setDefaultNavigationTimeout(90000); // 1.5 minutes (reduced for serverless)
+    await page.setDefaultTimeout(90000); // 1.5 minutes (reduced for serverless)
     
     // Retry mechanism for page navigation
     let retries = 0;
@@ -108,7 +100,7 @@ export async function scrapeYouTubeTrends(
       try {
         navigationResponse = await page.goto(url, { 
           waitUntil: 'domcontentloaded', // Changed from networkidle2 to domcontentloaded
-          timeout: 180000 // 3 minutes
+          timeout: 90000 // 1.5 minutes (reduced for serverless)
         });
         
         if (navigationResponse) break;
@@ -138,12 +130,11 @@ export async function scrapeYouTubeTrends(
     console.log('Page loaded successfully, starting to scroll');
     
     // Wait a moment for dynamic content to load
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
-    // Try a simpler scroll approach that's less likely to time out
+    // Try a simplified scroll approach that works better in serverless
     try {
-      // Simple scroll without complex evaluation
-      console.log('Using simplified scrolling to prevent timeouts');
+      console.log('Using simplified scrolling optimized for serverless');
       await simplifiedScroll(page);
     } catch (scrollError) {
       console.error('Error during simplified scroll:', scrollError);
@@ -155,7 +146,7 @@ export async function scrapeYouTubeTrends(
     try {
       // Wait for content to be fully loaded with increased timeout
       await page.waitForSelector('#contents ytd-video-renderer, #contents ytd-grid-video-renderer', {
-        timeout: 60000 // 1 minute
+        timeout: 30000 // Reduced timeout to 30 seconds for serverless
       });
       
       // Get HTML content
@@ -174,8 +165,8 @@ export async function scrapeYouTubeTrends(
     const videoElements = $('#contents ytd-video-renderer, #contents ytd-grid-video-renderer');
     console.log(`Found ${videoElements.length} video elements on page`);
     
-    // Limit to 10 videos for testing/demonstration
-    const maxVideos = Math.min(10, videoElements.length);
+    // Limit to 5 videos for serverless environment to reduce processing time
+    const maxVideos = Math.min(5, videoElements.length);
     
     for (let i = 0; i < maxVideos; i++) {
       try {
@@ -311,20 +302,20 @@ function extractNiche(title: string, keywords: string[]): string {
   return 'other';
 }
 
-// Simpler scroll function less prone to protocol timeouts
+// Simpler scroll function optimized for serverless environments
 async function simplifiedScroll(page: any) {
-  console.log('Starting simplified page scroll');
+  console.log('Starting simplified page scroll for serverless');
   
-  // Scroll just a few times with simple commands
+  // Use a minimal scroll approach to avoid timeouts
   try {
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       // Execute a simple scroll command
-      await page.evaluate('window.scrollBy(0, 1000)');
+      await page.evaluate('window.scrollBy(0, 800)');
       
-      // Wait a bit between scrolls
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Short wait between scrolls
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      console.log(`Completed scroll ${i+1}/3`);
+      console.log(`Completed scroll ${i+1}/2`);
     }
     
     console.log('Simplified scroll completed');
