@@ -1,0 +1,58 @@
+/* NetworkGraph.css */
+.network-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.375rem;
+  background-color: rgba(17, 25, 40, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.network-container:focus {
+  outline: none;
+}
+
+.network-controls {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  padding: 0.5rem;
+  background-color: rgba(23, 23, 23, 0.7);
+  border: 1px solid rgba(75, 85, 99, 0.7);
+  border-radius: 0.375rem;
+  color: rgba(156, 163, 175, 1);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  z-index: 10;
+}
+
+.network-controls p {
+  margin: 0.25rem 0;
+}
+
+/* Vis.js overrides */
+.vis-network:focus {
+  outline: none;
+}
+
+.vis-tooltip {
+  position: absolute;
+  visibility: hidden;
+  padding: 5px;
+  white-space: nowrap;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  color: #ffffff;
+  background-color: rgba(23, 23, 23, 0.9);
+  border: 1px solid #00e5ff;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Cyberpunk style for nodes */
+.vis-network .node-highlight {
+  box-shadow: 0 0 20px #00e5ff;
+  border: 2px solid #00e5ff;
+} 

@@ -1,0 +1,276 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@300;400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap');
+
+:root {
+  /* Base cyberpunk color scheme */
+  --primary: rgb(0, 255, 255);
+  --primary-light: rgba(0, 255, 255, 0.7);
+  --primary-dark: rgba(0, 200, 200, 1);
+  --primary-glow: 0 0 10px rgba(0, 255, 255, 0.7), 0 0 20px rgba(0, 255, 255, 0.3) inset;
+  
+  --secondary: rgb(255, 69, 0);
+  --secondary-light: rgba(255, 69, 0, 0.7);
+  --secondary-dark: rgba(220, 60, 0, 1);
+  --secondary-glow: 0 0 10px rgba(255, 69, 0, 0.7), 0 0 20px rgba(255, 69, 0, 0.3) inset;
+  
+  --accent: rgb(255, 213, 0);
+  --accent-light: rgba(255, 213, 0, 0.7);
+  --accent-dark: rgba(220, 180, 0, 1);
+  --accent-glow: 0 0 10px rgba(255, 213, 0, 0.7), 0 0 20px rgba(255, 213, 0, 0.3) inset;
+  
+  --background-main: rgb(10, 15, 30);
+  --background-light: rgb(30, 35, 50);
+  --background-dark: rgb(0, 5, 15);
+  --background-paper: rgb(20, 25, 40);
+  
+  --text-primary: rgb(220, 220, 255);
+  --text-secondary: rgb(160, 160, 200);
+  --text-disabled: rgb(100, 100, 130);
+  --text-highlight: rgb(0, 255, 255);
+  --text-warning: rgb(255, 213, 0);
+  --text-error: rgb(255, 69, 0);
+  
+  --font-family: "Rajdhani", "Orbitron", "Roboto Mono", monospace;
+  --title-font-family: "Orbitron", "Rajdhani", "Roboto Mono", monospace;
+  --monospace: "Roboto Mono", monospace;
+}
+
+@theme inline {
+  --color-background: var(--background-main);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-family);
+  --font-mono: var(--monospace);
+}
+
+/* Import cyberpunk animations */
+@keyframes glitch {
+  0% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes scan {
+  0% {
+    background-position: 0 -100vh;
+  }
+  100% {
+    background-position: 0 100vh;
+  }
+}
+
+@keyframes flicker {
+  0% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes neon-border {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--primary), 0 0 10px var(--primary-light);
+  }
+  50% {
+    box-shadow: 0 0 8px var(--primary), 0 0 15px var(--primary-light);
+  }
+}
+
+body {
+  background: var(--background-main);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Font utility classes for navbar */
+.font-orbitron {
+  font-family: 'Orbitron', sans-serif;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-roboto-mono {
+  font-family: 'Roboto Mono', monospace;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.02), transparent 80%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: -1;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0, 255, 255, 0) 0%, rgba(0, 255, 255, 0.03) 50%, rgba(0, 255, 255, 0) 100%);
+  background-size: 100% 4px;
+  animation: scan 4s linear infinite;
+  pointer-events: none;
+  opacity: 0.4;
+  z-index: -1;
+}
+
+/* Global cyberpunk style classes */
+.cyberpunk-panel {
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  background-color: var(--background-paper);
+  box-shadow: var(--primary-glow);
+  overflow: hidden;
+  position: relative;
+  animation: neon-border 5s infinite;
+}
+
+.cyberpunk-title {
+  font-family: var(--title-font-family);
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px var(--primary-light);
+}
+
+.cyberpunk-button {
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  text-transform: uppercase;
+  font-family: var(--font-family);
+  padding: 0.5rem 1rem;
+  position: relative;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.cyberpunk-button:hover {
+  background-color: rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 10px var(--primary);
+}
+
+.cyberpunk-button::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.3s ease;
+}
+
+.cyberpunk-button:hover::after {
+  left: 100%;
+}
+
+/* Danger button variant */
+.cyberpunk-button-danger {
+  border-color: var(--secondary);
+  color: var(--secondary);
+}
+
+.cyberpunk-button-danger:hover {
+  background-color: rgba(255, 69, 0, 0.1);
+  box-shadow: 0 0 10px var(--secondary);
+}
+
+.cyberpunk-button-danger::after {
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(255, 69, 0, 0.2) 50%,
+    transparent 100%
+  );
+}
+
+.cyberpunk-text-glitch {
+  animation: glitch 1s infinite;
+  text-shadow: 0 0 5px var(--primary);
+}
+
+.cyberpunk-text-pulse {
+  animation: pulse 2s infinite;
+}
+
+.cyberpunk-input {
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--primary);
+  color: var(--text-primary);
+  font-family: var(--monospace);
+  padding: 0.5rem;
+  outline: none;
+}
+
+.cyberpunk-input:focus {
+  box-shadow: 0 0 10px var(--primary);
+}
+
+.cyberpunk-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.cyberpunk-table th {
+  background-color: rgba(0, 255, 255, 0.1);
+  color: var(--primary);
+  text-transform: uppercase;
+  font-weight: bold;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--primary);
+}
+
+.cyberpunk-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.cyberpunk-table tr:hover td {
+  background-color: rgba(0, 255, 255, 0.05);
+}

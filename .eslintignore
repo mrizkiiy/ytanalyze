@@ -1,0 +1,14 @@
+node_modules
+.next
+public
+out
+src/app/api/
+src/app/google-trends/
+src/app/growth/
+src/app/help/
+src/app/keywords/
+src/app/page.tsx
+src/app/trend-analyzer/
+src/app/watchlist/
+src/components/
+src/lib/ 
