@@ -25,7 +25,16 @@ export async function scrapeYouTubeTrends(
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ],
+      timeout: 120000 // Increase browser launch timeout to 2 minutes
     });
     console.log('Puppeteer browser launched successfully');
 
@@ -33,6 +42,10 @@ export async function scrapeYouTubeTrends(
     
     // Set a reasonable viewport size
     await page.setViewport({ width: 1280, height: 800 });
+    
+    // Set longer timeouts for all operations
+    await page.setDefaultNavigationTimeout(120000); // 2 minutes
+    await page.setDefaultTimeout(120000); // 2 minutes
     
     // Navigate to YouTube Trending page or search results
     let url = 'https://www.youtube.com/feed/trending';
@@ -72,7 +85,7 @@ export async function scrapeYouTubeTrends(
     
     const navigationResponse = await page.goto(url, { 
       waitUntil: 'networkidle2',
-      timeout: 60000 // Increase timeout to 60 seconds
+      timeout: 120000 // Increase timeout to 2 minutes
     });
     
     if (!navigationResponse) {
@@ -85,12 +98,12 @@ export async function scrapeYouTubeTrends(
     
     console.log('Page loaded successfully, starting to scroll');
     
-    // Scroll to load more videos
+    // Scroll to load more videos - with a shorter scroll to prevent timeout
     await autoScroll(page);
     
-    // Wait for content to be fully loaded
+    // Wait for content to be fully loaded with increased timeout
     await page.waitForSelector('#contents ytd-video-renderer, #contents ytd-grid-video-renderer', {
-      timeout: 30000
+      timeout: 60000 // Increase to 1 minute
     }).catch(() => {
       console.log('Warning: Timeout waiting for video elements. Proceeding anyway.');
     });
@@ -251,7 +264,7 @@ async function autoScroll(page: any) {
       await new Promise<void>((resolve) => {
         let totalHeight = 0;
         const distance = 100;
-        const maxScrolls = 20; // Limit scrolling to avoid excessive load
+        const maxScrolls = 10; // Reduce from 20 to 10 to limit scrolling
         let scrollCount = 0;
         
         const timer = setInterval(() => {
@@ -264,7 +277,7 @@ async function autoScroll(page: any) {
             clearInterval(timer);
             resolve();
           }
-        }, 100);
+        }, 200); // Increased from 100ms to 200ms to be less aggressive
       });
     });
     console.log('Auto-scroll completed');
