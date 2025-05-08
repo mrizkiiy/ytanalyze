@@ -40,7 +40,8 @@ export async function scrapeYouTubeTrends(
         '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
       ],
       ignoreDefaultArgs: false,
-      timeout: 180000 // Increase to 3 minutes
+      timeout: 180000, // Increase to 3 minutes
+      protocolTimeout: 180000 // Adding protocol timeout of 3 minutes
     });
     console.log('Puppeteer browser launched successfully');
 
@@ -139,8 +140,15 @@ export async function scrapeYouTubeTrends(
     // Wait a moment for dynamic content to load
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    // Scroll to load more videos - with a shorter scroll to prevent timeout
-    await autoScroll(page);
+    // Try a simpler scroll approach that's less likely to time out
+    try {
+      // Simple scroll without complex evaluation
+      console.log('Using simplified scrolling to prevent timeouts');
+      await simplifiedScroll(page);
+    } catch (scrollError) {
+      console.error('Error during simplified scroll:', scrollError);
+      // Continue even if scrolling fails - we might still get some content
+    }
     
     // Try to find some content, even if the specific selectors fail
     let content;
@@ -303,31 +311,41 @@ function extractNiche(title: string, keywords: string[]): string {
   return 'other';
 }
 
-// Helper function to scroll page
+// Simpler scroll function less prone to protocol timeouts
+async function simplifiedScroll(page: any) {
+  console.log('Starting simplified page scroll');
+  
+  // Scroll just a few times with simple commands
+  try {
+    for (let i = 0; i < 3; i++) {
+      // Execute a simple scroll command
+      await page.evaluate('window.scrollBy(0, 1000)');
+      
+      // Wait a bit between scrolls
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log(`Completed scroll ${i+1}/3`);
+    }
+    
+    console.log('Simplified scroll completed');
+  } catch (error) {
+    console.error('Error during simplified scroll:', error);
+    // Just log the error and continue
+  }
+}
+
+// Original auto-scroll function (keeping as backup/alternative)
 async function autoScroll(page: any) {
   console.log('Starting page auto-scroll');
   
   try {
-    await page.evaluate(async () => {
-      await new Promise<void>((resolve) => {
-        let totalHeight = 0;
-        const distance = 100;
-        const maxScrolls = 5; // Reduce from 10 to 5 to prevent timeouts
-        let scrollCount = 0;
-        
-        const timer = setInterval(() => {
-          const scrollHeight = document.body.scrollHeight;
-          window.scrollBy(0, distance);
-          totalHeight += distance;
-          scrollCount++;
-          
-          if (totalHeight >= scrollHeight || scrollCount >= maxScrolls) {
-            clearInterval(timer);
-            resolve();
-          }
-        }, 500); // Increased from 200ms to 500ms to be even less aggressive
-      });
+    // Use a simpler approach with a basic evaluation
+    await page.evaluate(() => {
+      for (let i = 0; i < 5; i++) {
+        window.scrollBy(0, 500);
+      }
     });
+    
     console.log('Auto-scroll completed');
   } catch (scrollError) {
     console.error('Error during auto-scroll:', scrollError);
