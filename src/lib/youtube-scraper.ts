@@ -32,20 +32,39 @@ export async function scrapeYouTubeTrends(
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-infobars',
+        '--window-position=0,0',
+        '--ignore-certifcate-errors',
+        '--ignore-certifcate-errors-spki-list',
+        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
       ],
-      timeout: 120000 // Increase browser launch timeout to 2 minutes
+      ignoreDefaultArgs: false,
+      timeout: 180000 // Increase to 3 minutes
     });
     console.log('Puppeteer browser launched successfully');
 
     const page = await browser.newPage();
     
+    // Additional settings to make puppeteer less detectable
+    await page.setJavaScriptEnabled(true);
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'Connection': 'keep-alive'
+    });
+    
     // Set a reasonable viewport size
     await page.setViewport({ width: 1280, height: 800 });
     
     // Set longer timeouts for all operations
-    await page.setDefaultNavigationTimeout(120000); // 2 minutes
-    await page.setDefaultTimeout(120000); // 2 minutes
+    await page.setDefaultNavigationTimeout(180000); // 3 minutes
+    await page.setDefaultTimeout(180000); // 3 minutes
+    
+    // Retry mechanism for page navigation
+    let retries = 0;
+    const maxRetries = 3;
+    let navigationResponse = null;
     
     // Navigate to YouTube Trending page or search results
     let url = 'https://www.youtube.com/feed/trending';
@@ -83,13 +102,32 @@ export async function scrapeYouTubeTrends(
     
     console.log(`Navigating to URL: ${url}`);
     
-    const navigationResponse = await page.goto(url, { 
-      waitUntil: 'networkidle2',
-      timeout: 120000 // Increase timeout to 2 minutes
-    });
+    // Retry loop for navigation
+    while (retries < maxRetries) {
+      try {
+        navigationResponse = await page.goto(url, { 
+          waitUntil: 'domcontentloaded', // Changed from networkidle2 to domcontentloaded
+          timeout: 180000 // 3 minutes
+        });
+        
+        if (navigationResponse) break;
+        
+      } catch (navError) {
+        console.error(`Navigation attempt ${retries + 1} failed:`, navError);
+        retries++;
+        
+        if (retries >= maxRetries) {
+          throw navError;
+        }
+        
+        // Wait before retrying
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log(`Retrying navigation (attempt ${retries + 1}/${maxRetries})...`);
+      }
+    }
     
     if (!navigationResponse) {
-      throw new Error(`Failed to navigate to ${url} - No response received`);
+      throw new Error(`Failed to navigate to ${url} - No response received after ${maxRetries} attempts`);
     }
     
     if (!navigationResponse.ok()) {
@@ -98,18 +136,28 @@ export async function scrapeYouTubeTrends(
     
     console.log('Page loaded successfully, starting to scroll');
     
+    // Wait a moment for dynamic content to load
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
     // Scroll to load more videos - with a shorter scroll to prevent timeout
     await autoScroll(page);
     
-    // Wait for content to be fully loaded with increased timeout
-    await page.waitForSelector('#contents ytd-video-renderer, #contents ytd-grid-video-renderer', {
-      timeout: 60000 // Increase to 1 minute
-    }).catch(() => {
-      console.log('Warning: Timeout waiting for video elements. Proceeding anyway.');
-    });
+    // Try to find some content, even if the specific selectors fail
+    let content;
+    try {
+      // Wait for content to be fully loaded with increased timeout
+      await page.waitForSelector('#contents ytd-video-renderer, #contents ytd-grid-video-renderer', {
+        timeout: 60000 // 1 minute
+      });
+      
+      // Get HTML content
+      content = await page.content();
+    } catch (selectorError) {
+      console.log('Warning: Timeout waiting for specific video elements. Trying to get page content anyway.');
+      // Still try to get content even if the specific selectors fail
+      content = await page.content();
+    }
     
-    // Get HTML content
-    const content = await page.content();
     const $ = cheerio.load(content);
     
     const videos: YouTubeVideo[] = [];
@@ -264,7 +312,7 @@ async function autoScroll(page: any) {
       await new Promise<void>((resolve) => {
         let totalHeight = 0;
         const distance = 100;
-        const maxScrolls = 10; // Reduce from 20 to 10 to limit scrolling
+        const maxScrolls = 5; // Reduce from 10 to 5 to prevent timeouts
         let scrollCount = 0;
         
         const timer = setInterval(() => {
@@ -277,7 +325,7 @@ async function autoScroll(page: any) {
             clearInterval(timer);
             resolve();
           }
-        }, 200); // Increased from 100ms to 200ms to be less aggressive
+        }, 500); // Increased from 200ms to 500ms to be even less aggressive
       });
     });
     console.log('Auto-scroll completed');
